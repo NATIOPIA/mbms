@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: Mobile Banking Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page, scrolling dashboard with a sticky navigation bar for easy access to key sections: Overview, Account Comparison, System Architecture, Features, and Limitations. This structure transforms the static, linear report into a user-driven, interactive experience. The centerpiece is the 'Account Comparison' tool, which allows users to dynamically explore and compare account types, making the data more engaging and understandable. Visual diagrams for system architecture simplify complex technical concepts. This non-linear, thematic approach was chosen over a direct report-to-page translation to prioritize user engagement, data exploration, and clarity for both technical and non-technical audiences. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Account Types Data (Interest, Service Charge, etc.) -> Goal: Compare -> Viz: Interactive Bar Chart (Chart.js) & Dynamic Info Cards (HTML/JS) -> Interaction: User selects account type, triggering chart/card updates -> Justification: Turns a static list into a powerful, easy-to-use comparison tool. -> Library: Chart.js, Vanilla JS.
+        - Report Info: Core C++ Components (Classes/Structs) -> Goal: Organize/Inform -> Viz: Visual Diagram (HTML/CSS Flexbox) -> Interaction: Hover to highlight (future enhancement) -> Justification: Makes abstract code structure tangible and easier to grasp than code snippets. -> Library: HTML/CSS.
+        - Report Info: Core Features/Limitations -> Goal: Inform -> Viz: Card-based layout with Unicode icons -> Interaction: None -> Justification: Improves scannability and visual separation of key points. -> Library: HTML/CSS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #4A4A4A;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover {
+            color: #6C8EAD;
+        }
+        .nav-link.active {
+            color: #6C8EAD;
+            border-bottom: 2px solid #6C8EAD;
+        }
+        .card-active {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #6C8EAD;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header id="header" class="bg-[#F8F7F4]/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-[#4A4A4A]">Mobile Banking System</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#overview" class="nav-link font-medium pb-1">Overview</a>
+                <a href="#accounts" class="nav-link font-medium pb-1">Account Comparison</a>
+                <a href="#architecture" class="nav-link font-medium pb-1">System Architecture</a>
+                <a href="#features" class="nav-link font-medium pb-1">Features & Limitations</a>
+                <a href="#creators" class="nav-link font-medium pb-1">Creators</a>
+            </div>
+            <div class="md:hidden">
+                <select id="mobile-nav" class="bg-white border border-gray-300 rounded-md px-3 py-2">
+                    <option value="#overview">Overview</option>
+                    <option value="#accounts">Account Comparison</option>
+                    <option value="#architecture">System Architecture</option>
+                    <option value="#features">Features & Limitations</option>
+                    <option value="#creators">Creators</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="overview" class="scroll-mt-24 text-center mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#4A4A4A]">The C++ Mobile Banking System</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                This interactive report breaks down the C++ based Mobile Banking Management System. We've transformed the original technical documentation into an explorable, visual experience. Here, you can dynamically compare account types, visualize the system's architecture, and quickly grasp its core features and limitations without digging through code.
+            </p>
+        </section>
+
+        <section id="accounts" class="scroll-mt-24 mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-[#4A4A4A]">Interactive Account Comparison</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                    Choosing an account involves trade-offs between interest rates, service charges, and rules. This section provides a dynamic tool to explore these differences. Click on an account card below to see its details and compare its financial parameters against all other available accounts in the chart.
+                </p>
+            </div>
+
+            <div id="account-cards" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <h3 class="font-bold text-xl mb-4 text-center">Interest vs. Service Charge Rates (%)</h3>
+                         <div class="chart-container">
+                            <canvas id="accountChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="account-details" class="flex flex-col justify-center bg-gray-50 rounded-lg p-6">
+                        <h3 class="font-bold text-2xl mb-4" id="details-name">Select an Account</h3>
+                        <div class="space-y-4 text-lg">
+                            <div>
+                                <span class="font-semibold">Minimum Balance:</span>
+                                <span id="details-min-balance">-</span>
+                            </div>
+                             <div>
+                                <span class="font-semibold">Interest Rate (monthly):</span>
+                                <span id="details-interest">-</span>
+                            </div>
+                             <div>
+                                <span class="font-semibold">Service Charge (on withdrawal):</span>
+                                <span id="details-service-charge">-</span>
+                            </div>
+                            <div class="border-t pt-4 mt-4">
+                                <span class="font-semibold">Restrictions:</span>
+                                <span id="details-restrictions" class="block text-gray-700">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="scroll-mt-24 mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-[#4A4A4A]">System Architecture</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                   The system's foundation is built on a few key C++ structures and classes that manage data and logic. The diagrams below illustrate the relationships between these core components and how the application data is stored persistently in local files. This provides a high-level blueprint of the system's design.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="font-bold text-2xl mb-6 text-center">Core Data Structures</h3>
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                            <h4 class="font-bold text-lg">Admin Class</h4>
+                            <p class="text-gray-700">Manages a single, password-protected admin account for system-wide functions.</p>
+                        </div>
+                        <div class="flex justify-center my-2">
+                            <span class="text-2xl text-gray-400">↓</span>
+                        </div>
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg">
+                            <h4 class="font-bold text-lg">AccountNode Structure</h4>
+                            <p class="text-gray-700">The primary data model. Represents a single user account, holding personal details, balance, and a history of transactions.</p>
+                        </div>
+                        <div class="flex justify-center my-2">
+                            <span class="text-2xl text-gray-400">↓</span>
+                        </div>
+                        <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+                            <h4 class="font-bold text-lg">Transaction Structure</h4>
+                            <p class="text-gray-700">A record linked to an AccountNode, detailing a single financial event like a deposit, withdrawal, or service charge.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="font-bold text-2xl mb-6 text-center">Data Storage & Persistence</h3>
+                    <div class="flex flex-col items-center justify-center h-full space-y-4">
+                        <div class="text-center">
+                             <div class="text-5xl">🖥️</div>
+                             <p class="font-semibold mt-2">C++ Application Logic</p>
+                        </div>
+                        <div class="text-3xl text-gray-400">↓↑</div>
+                        <div class="flex space-x-8">
+                            <div class="text-center bg-gray-100 p-4 rounded-lg">
+                                <div class="text-5xl">📄</div>
+                                <p class="font-semibold mt-2">accounts.csv</p>
+                                <p class="text-sm text-gray-600">Stores all user account data</p>
+                            </div>
+                            <div class="text-center bg-gray-100 p-4 rounded-lg">
+                                <div class="text-5xl">🔒</div>
+                                <p class="font-semibold mt-2">admin.dat</p>
+                                <p class="text-sm text-gray-600">Stores admin credentials securely</p>
+                            </div>
+                        </div>
+                        <p class="text-center text-gray-600 mt-4 max-w-xs">The system reads from and writes to these files to ensure data persists between sessions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="scroll-mt-24">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-[#4A4A4A]">Features & Limitations</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                    Every system has its strengths and constraints. Below is a summary of the core functionalities offered by the banking system, contrasted with its current limitations. This provides a balanced view of the application's capabilities.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="font-bold text-2xl mb-6 flex items-center gap-3"><span class="text-3xl text-green-500">✓</span> Core Features</h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start"><span class="mr-3 mt-1">👤</span><div><strong>Account Management:</strong> Create, edit, search, and delete user accounts with validation.</div></li>
+                        <li class="flex items-start"><span class="mr-3 mt-1">💸</span><div><strong>Transactions:</strong> Perform deposits, withdrawals, and transfers between accounts.</div></li>
+                        <li class="flex items-start"><span class="mr-3 mt-1">📈</span><div><strong>Interest & Charges:</strong> Automatically calculate and apply monthly interest and service charges based on account type.</div></li>
+                         <li class="flex items-start"><span class="mr-3 mt-1">🛡️</span><div><strong>Admin Functions:</strong> Secure admin panel to view all accounts, manage system-wide settings, and change credentials.</div></li>
+                         <li class="flex items-start"><span class="mr-3 mt-1">📜</span><div><strong>Transaction History:</strong> View a detailed history of transactions for any account.</div></li>
+                    </ul>
+                </div>
+                 <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="font-bold text-2xl mb-6 flex items-center gap-3"><span class="text-3xl text-red-500">✗</span> System Limitations</h3>
+                    <ul class="space-y-3 text-lg">
+                        <li class="flex items-start"><span class="mr-3 mt-1">☝️</span><div><strong>Single Admin:</strong> The system is designed for only one administrator account.</div></li>
+                        <li class="flex items-start"><span class="mr-3 mt-1">🌍</span><div><strong>No International Transfers:</strong> Functionality is limited to domestic transactions.</div></li>
+                        <li class="flex items-start"><span class="mr-3 mt-1">🏦</span><div><strong>No Loan Facilities:</strong> The system does not include features for managing loans or credit.</div></li>
+                        <li class="flex items-start"><span class="mr-3 mt-1">💰</span><div><strong>Daily Transfer Limit:</strong> A hard-coded daily transfer limit of 600,000 Birr is enforced.</div></li>
+                         <li class="flex items-start"><span class="mr-3 mt-1">⌨️</span><div><strong>Console Interface:</strong> The primary user interface is text-based within a console window.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="creators" class="scroll-mt-24 mb-16 md:mb-24">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2 text-[#4A4A4A]">Creators</h2>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">
+                    This website is created by 2nd year computer science students named:
+                </p>
+                <ul class="max-w-md mx-auto text-left text-lg text-gray-700 list-disc list-inside mt-6 space-y-2">
+                    <li>Natnael Tsedeke............ID-7783/23</li>
+                    <li>Naol Sisay.................ID-0590/23</li>
+                    <li>Robel Wondwesed............ID-0752/23</li>
+                    <li>Mastewal Demirew...........ID-7179/23</li>
+                    <li>Natnael Birhanu............ID-7293/21</li>
+                    <li>Sara dejene................ID-6169/23</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-4 text-center">
+            <p>Interactive Report For Mobile Banking System .</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const accountData = [
+                { id: 'saving', name: 'Saving', minBalance: 50, interest: 3.0, serviceCharge: 0.5, restrictions: 'None.' },
+                { id: 'education', name: 'Education', minBalance: 10, interest: 3.2, serviceCharge: 0.2, restrictions: 'Age restriction: 6-25 years.' },
+                { id: 'womens', name: 'Women\'s', minBalance: 25, interest: 3.7, serviceCharge: 0.3, restrictions: 'Gender restriction: Female only.' },
+                { id: 'childrens', name: 'Children\'s', minBalance: 25, interest: 3.5, serviceCharge: 0.3, restrictions: 'Age restriction: Under 18 years.' },
+                { id: 'closed', name: 'Closed', minBalance: 200, interest: 2.5, serviceCharge: 1.0, restrictions: 'None.' },
+                { id: 'noInterest', name: 'No-Interest', minBalance: 50, interest: 0.0, serviceCharge: 0.8, restrictions: 'No interest is accrued.' },
+            ];
+
+            const accountCardsContainer = document.getElementById('account-cards');
+            const detailsName = document.getElementById('details-name');
+            const detailsMinBalance = document.getElementById('details-min-balance');
+            const detailsInterest = document.getElementById('details-interest');
+            const detailsServiceCharge = document.getElementById('details-service-charge');
+            const detailsRestrictions = document.getElementById('details-restrictions');
+
+            let activeCard = null;
+
+            function updateDetails(account) {
+                detailsName.textContent = `${account.name} Account`;
+                detailsMinBalance.textContent = `${account.minBalance} Birr`;
+                detailsInterest.textContent = `${account.interest}%`;
+                detailsServiceCharge.textContent = `${account.serviceCharge}%`;
+                detailsRestrictions.textContent = account.restrictions;
+            }
+
+            const chartColors = {
+                interest: 'rgba(108, 142, 173, 0.7)',
+                service: 'rgba(239, 68, 68, 0.7)',
+                highlightInterest: 'rgba(108, 142, 173, 1)',
+                highlightService: 'rgba(239, 68, 68, 1)',
+                borderInterest: 'rgba(108, 142, 173, 1)',
+                borderService: 'rgba(239, 68, 68, 1)',
+            };
+
+            const ctx = document.getElementById('accountChart').getContext('2d');
+            const accountChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: accountData.map(a => a.name),
+                    datasets: [
+                        {
+                            label: 'Interest Rate (%)',
+                            data: accountData.map(a => a.interest),
+                            backgroundColor: chartColors.interest,
+                            borderColor: chartColors.borderInterest,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Service Charge (%)',
+                            data: accountData.map(a => a.serviceCharge),
+                            backgroundColor: chartColors.service,
+                             borderColor: chartColors.borderService,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function highlightChart(selectedId) {
+                accountChart.data.datasets.forEach((dataset, i) => {
+                    const isInterest = i === 0;
+                    dataset.backgroundColor = accountData.map(account => {
+                        if (account.id === selectedId) {
+                            return isInterest ? chartColors.highlightInterest : chartColors.highlightService;
+                        }
+                        return isInterest ? chartColors.interest : chartColors.service;
+                    });
+                });
+                accountChart.update();
+            }
+
+            accountData.forEach(account => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg p-4 text-center cursor-pointer border-2 border-transparent hover:shadow-md hover:border-gray-300 transition-all duration-300';
+                card.dataset.id = account.id;
+                card.innerHTML = `<div class="font-semibold">${account.name}</div>`;
+                card.addEventListener('click', () => {
+                    if (activeCard) {
+                        activeCard.classList.remove('card-active');
+                    }
+                    card.classList.add('card-active');
+                    activeCard = card;
+                    updateDetails(account);
+                    highlightChart(account.id);
+                });
+                accountCardsContainer.appendChild(card);
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { rootMargin: '-50% 0px -50% 0px' });
+
+            sections.forEach(section => observer.observe(section));
+
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (e) => {
+                const targetId = e.target.value;
+                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+            });
+
+            document.querySelector('#account-cards > div:first-child').click();
+        });
+    </script>
+</body>
+</html>
